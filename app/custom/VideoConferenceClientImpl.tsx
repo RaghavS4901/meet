@@ -71,9 +71,26 @@ export function VideoConferenceClientImpl(props: {
       room.connect(props.liveKitUrl, props.token, connectOptions).catch((error) => {
         console.error(error);
       });
-      room.localParticipant.enableCameraAndMicrophone().catch((error) => {
-        console.error(error);
-      });
+      useEffect(() => {
+  if (e2eeSetupComplete) {
+    room.connect(props.liveKitUrl, props.token, connectOptions).catch((error) => {
+      console.error("Room connection error:", error);
+    });
+
+    (async () => {
+      try {
+        await room.localParticipant.enableCameraAndMicrophone();
+      } catch (err: any) {
+        if (err.name === "NotAllowedError") {
+          console.warn("User denied camera/microphone permissions. Continuing without media.");
+        } else {
+          console.error("Error enabling camera/microphone:", err);
+        }
+      }
+    })();
+  }
+}, [room, props.liveKitUrl, props.token, connectOptions, e2eeSetupComplete]);
+
     }
   }, [room, props.liveKitUrl, props.token, connectOptions, e2eeSetupComplete]);
 
