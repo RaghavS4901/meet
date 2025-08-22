@@ -12,10 +12,9 @@ import { isLocalTrack, LocalTrackPublication, Track } from 'livekit-client';
 //import Nature from '../public/background-images/ali-kazal-tbw_KQE3Cbg-unsplash.jpg';
 
 // Background image paths
-const BACKGROUND_IMAGES = [
-  { name: 'Desk', path: Desk },
-  { name: 'Nature', path: Nature },
-];
+// Background image paths (disabled for now to avoid build errors)
+const BACKGROUND_IMAGES: { name: string; path: string }[] = [];
+
 
 // Background options
 type BackgroundType = 'none' | 'blur' | 'image';
