@@ -22,7 +22,8 @@ export function VideoConferenceClientImpl(props: {
   token: string;
   codec: VideoCodec | undefined;
 }) {
-  const keyProvider = new ExternalE2EEKeyProvider();
+  // Memoize keyProvider so it doesn’t recreate on every render
+  const keyProvider = useMemo(() => new ExternalE2EEKeyProvider(), []);
   const { worker, e2eePassphrase } = useSetupE2EE();
   const e2eeEnabled = !!(e2eePassphrase && worker);
 
@@ -54,6 +55,7 @@ export function VideoConferenceClientImpl(props: {
     };
   }, []);
 
+  // Setup E2EE if enabled
   useEffect(() => {
     if (e2eeEnabled) {
       keyProvider.setKey(e2eePassphrase).then(() => {
@@ -64,20 +66,17 @@ export function VideoConferenceClientImpl(props: {
     } else {
       setE2eeSetupComplete(true);
     }
-  }, [e2eeEnabled, e2eePassphrase, keyProvider, room, setE2eeSetupComplete]);
+  }, [e2eeEnabled, e2eePassphrase, keyProvider, room]);
 
+  // Connect to room + enable camera/mic
   useEffect(() => {
-    if (e2eeSetupComplete) {
-      room.connect(props.liveKitUrl, props.token, connectOptions).catch((error) => {
-        console.error(error);
-      });
-      useEffect(() => {
-  if (e2eeSetupComplete) {
+    if (!e2eeSetupComplete) return;
+
     room.connect(props.liveKitUrl, props.token, connectOptions).catch((error) => {
       console.error("Room connection error:", error);
     });
 
-    (async () => {
+    const enableMedia = async () => {
       try {
         await room.localParticipant.enableCameraAndMicrophone();
       } catch (err: any) {
@@ -87,12 +86,10 @@ export function VideoConferenceClientImpl(props: {
           console.error("Error enabling camera/microphone:", err);
         }
       }
-    })();
-  }
-}, [room, props.liveKitUrl, props.token, connectOptions, e2eeSetupComplete]);
+    };
 
-    }
-  }, [room, props.liveKitUrl, props.token, connectOptions, e2eeSetupComplete]);
+    enableMedia();
+  }, [e2eeSetupComplete, props.liveKitUrl, props.token, connectOptions, room]);
 
   useLowCPUOptimizer(room);
 
